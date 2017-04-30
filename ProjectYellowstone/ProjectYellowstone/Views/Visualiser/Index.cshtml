@@ -1,0 +1,391 @@
+﻿@{
+    ViewBag.Title = "Visualiser";
+}
+
+<div class="row">
+	<div class="col-md-9">
+		<div id="primaryMap"></div>
+	</div>
+	<div class="col-md-3">
+		<div class="row">
+			<div class="col-md-12">
+				<input id="btnOpenSubmitReportModal" type="button" class="btn btn-default btn-block" value="Add Report" />
+			</div>
+			@*<div class="col-md-6">
+				<a class="btn btn-default btn-block" href="/Reports">View Reports</a>
+			</div>*@
+		</div>
+		<br />
+		<div class="row">
+			<div class="col-md-6">
+				<input id="btnMyLocation" type="button" class="btn btn-default btn-block" value="My location" />
+			</div>
+			<div class="col-md-6">
+				<input id="btnViewWorld" type="button" class="btn btn-default btn-block" value="World" />
+			</div>
+		</div>
+		<br />
+		@*<div class="row">
+			<div class="col-md-12">
+				<input id="btnPathfinding" type="button" class="btn btn-default btn-block" value="Pathfinding Mode Off" />
+			</div>
+		</div>*@
+		<div class="row">
+			<div id="fireInfoBox" class="col-md-12">
+				<h3>Fire Info <small id="lblLoading" hidden="hidden"> Loading...</small></h3>
+				<p>ID: <span id="lblFireID"></span></p>
+				<p>Latitude: <span id="lblFireLatitude"></span></p>
+				<p>Longitude: <span id="lblFireLongitude"></span></p>
+				<div id="nonUserSubmitted" hidden="hidden">
+					<p>Confidence: <span id="lblFireConfidence"></span></p>
+					<p>Temperature in Kelvin: <span id="lblFireTempKelvin"></span></p>
+					<p>Temperature in Celcius: <span id="lblFireTempCelcius"></span></p>
+					<p>Temperature in Fahrenheit: <span id="lblFireTempFahrenheit"></span></p>
+				</div>
+			</div>
+			@*<div id="pathfindingModeBox" class="col-md-12" hidden="hidden">
+				<h3>Pathfinding Mode <small id="lblPathfindingStatus"> Idle</small></h3>
+				<p>While in pathfinding mode click anywhere inside the highlighted rectangle to place down a civilian rescue point.</p>
+				<input id="btnFindPaths" disabled="disabled" type="button" class="btn btn-default btn-block" value="Find paths" />
+			</div>*@
+		</div>
+	</div>
+</div>
+
+<div id="submitReportModal" class="modal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title">Submit Fire Report</h4>
+			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-12">
+						<label class="control-label" for="txtLatitude">Latitude:</label>
+						<input id="txtLatitude" class="form-control" type="text" />
+					</div>
+				</div>
+				<br />
+				<div class="row">
+					<div class="col-md-12">
+						<label class="control-label" for="txtLongitude">Longitude:</label>
+						<input id="txtLongitude" class="form-control" type="text" />
+					</div>
+				</div>
+				<br />
+				<div class="row">
+					<div class="col-md-12">
+						<input id="btnGetCoordinates" class="btn btn-default btn-block" type="button" value="My Location" />
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button id="btnSubmitReport" type="button" class="btn btn-primary">Submit</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	var primaryMap;
+
+	var kmInDegree = 111.32;
+	var mInDegree = kmInDegree * 1000;
+	var defaultCoordinates = {
+		lat: 35,
+		lng: 0
+	};
+	var defaultZoom = 3;
+
+	//var markerFireImage;
+
+	var markers;
+
+	//var areaSelectionRect;
+
+	//var isPathfinding = false;
+
+	//var civPoints;
+
+	//$("#btnPathfinding").click(function () {
+
+	//	if (isPathfinding) {
+	//		$("#pathfindingModeBox").hide();
+	//		$("#fireInfoBox").show();
+
+	//		$("#btnPathfinding").val("Pathfinding Mode Off");
+
+	//		for (var i in civPoints) {
+	//			civPoints[i].setMap(null);
+	//		}
+
+	//		areaSelectionRect.setMap(null);
+	//	} else {
+	//		$("#fireInfoBox").hide();
+	//		$("#pathfindingModeBox").show();
+
+	//		$("#btnPathfinding").val("Pathfinding Mode On");
+
+	//		primaryMap.setZoom(14);
+
+	//		civPoints = [];
+
+	//		var mapCenter = primaryMap.getCenter();
+
+	//		var desiredRectWidthM = 1000;
+	//		var desiredRectHeightM = 1000;
+
+	//		var rectHeightDegrees = desiredRectHeightM / mInDegree;
+	//		var rectWidthDegrees = desiredRectWidthM / (mInDegree * Math.cos(toRadians(mapCenter.lat())));
+
+	//		var initialBounds = {
+	//			north: mapCenter.lat() + (rectHeightDegrees / 2),
+	//			south: mapCenter.lat() - (rectHeightDegrees / 2),
+	//			east: mapCenter.lng() + (rectWidthDegrees / 2),
+	//			west: mapCenter.lng() - (rectWidthDegrees / 2)
+	//		};
+
+	//		areaSelectionRect.setBounds(initialBounds);
+	//		areaSelectionRect.setMap(primaryMap);
+	//	}
+
+	//	isPathfinding = !isPathfinding;
+	//});
+
+	//function areaRectClicked(e) {
+
+	//	if (isPathfinding) {
+
+	//		var coords = e.latLng;
+
+	//		var newCivPoint = new google.maps.Marker({
+	//			position: coords,
+	//			map: primaryMap
+	//		});
+
+	//		google.maps.event.addListener(newCivPoint, "click", function () {
+	//			newCivPoint.setMap(null);
+	//			var removedIndex = civPoints.indexOf(newCivPoint);
+	//			civPoints.splice(removedIndex, 1);
+	//		});
+
+	//		civPoints.push(newCivPoint);
+
+	//		if (civPoints.length > 0 && civPoints.length < 7)
+	//			$("#btnFindPaths").removeAttr("disabled");
+	//		else
+	//			$("#btnFindPaths").attr("disabled", "disabled");
+	//	}
+	//}
+
+	$("#btnOpenSubmitReportModal").click(function () {
+		$("#submitReportModal").modal("show");
+	});
+
+	$("#btnSubmitReport").click(function () {
+
+		var lat = $("#txtLatitude").val();
+		var lng = $("#txtLongitude").val();
+
+		$.ajax({
+			url: "/Reports/Add",
+			method: "POST",
+			data: { lat: lat, lng: lng }
+		}).done(function (response) {
+			if (response == false) {
+				alert("Failed to submit report, sorry. Try again later.");
+			}
+			$("#submitReportModal").modal("hide");
+			resetModalFields();
+		});
+	});
+
+	function resetModalFields() {
+		$("#txtLatitude").val("");
+		$("#txtLongitude").val("");
+	}
+
+	$("#btnGetCoordinates").click(function () {
+		getPosition(displayCoordinatesInModal);
+	});
+
+	function displayCoordinatesInModal(position) {
+		$("#txtLatitude").val(position.coords.latitude);
+		$("#txtLongitude").val(position.coords.longitude);
+	}
+
+	$("#btnMyLocation").click(function () {
+		getPosition(showPosition);
+	});
+
+	$("#btnViewWorld").click(function () {
+		viewWorld();
+	});
+
+	function markerCallback(element) {
+		$("#lblFireID").html(element.id);
+		$("#lblFireLatitude").html(element.latitude);
+		$("#lblFireLongitude").html(element.longitude);
+
+		if (element.confidence != 0)
+		{
+			$("#lblFireConfidence").html(getConfidenceString(element.confidence));
+
+			$("#lblFireTempKelvin").html(element.temperature + " Kelvin");
+
+			var celcius = parseFloat(element.temperature) - 273.15;
+			$("#lblFireTempCelcius").html(celcius.toFixed(2) + " Celcius");
+
+			var fahrenheit = parseFloat(element.temperature) * 9 / 5 - 459.67;
+			$("#lblFireTempFahrenheit").html(fahrenheit.toFixed(2) + " Fahrenheit");
+
+			$("#nonUserSubmitted").show();
+		}
+		else
+		{
+			$("#nonUserSubmitted").hide();
+		}
+	}
+
+	function getConfidenceString(confidence) {
+		switch (confidence) {
+			case '90':
+				return "High";
+			case '60':
+				return "Nominal";
+			case '30':
+				return "Low";
+			case '0':
+				return "Default User Inputted";
+			default:
+				return confidence + " percent";
+		}
+	}
+
+	function displayFires(lat, lng, radius) {
+
+		// Remove all markers from map.
+		for (var i in markers) {
+			markers[i].setMap(null);
+		}
+
+		markers = [];
+
+		$.ajax({
+			url: "/Reports/Load",
+			data: { lat: lat, lng: lng, radius: radius },
+			method: "GET",
+			beforeSend: function () {
+				$("#lblLoading").show();
+			},
+			success: function (data) {
+				var jsonData = JSON.parse(data);
+				$.each(jsonData, function (index, element) {
+
+					var imageUrl;
+					switch (element.confidence) {
+						case '90':
+							imageUrl = "/Content/fire_symbol_pic.png";
+							break;
+						case '60':
+							imageUrl = "/Content/fire_symbol_pic_1.png";
+							break;
+						case '30':
+							imageUrl = "/Content/fire_symbol_pic_2.png";
+							break;
+						case '0':
+							imageUrl = "/Content/fire_symbol_pic_3.png";
+							break;
+					}
+
+					var markerFireImage = new google.maps.MarkerImage(imageUrl, null, null, null, new google.maps.Size(32, 32));
+
+					var marker = new google.maps.Marker({
+						position: { lat: parseFloat(element.latitude), lng: parseFloat(element.longitude) },
+						map: primaryMap,
+						icon: markerFireImage
+					});
+
+					marker.addListener("click", function () {
+						markerCallback(element);
+					});
+
+					markers.push(marker);
+				});
+				$("#lblLoading").hide();
+			}
+		});
+	}
+
+	function getPosition(callback) {
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(callback);
+		}
+	}
+
+	function showPosition(position) {
+		primaryMap.setCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
+		primaryMap.setZoom(10);
+	}
+
+	function initMap(coords) {
+		primaryMap = new google.maps.Map(document.getElementById("primaryMap"), {
+			zoom: defaultZoom,
+			center: defaultCoordinates,
+			mapTypeId: "hybrid",
+			disableDefaultUI: true
+		});
+
+		google.maps.event.addListener(primaryMap, "dragend", updateFire);
+		google.maps.event.addListener(primaryMap, "zoom_changed", updateFire);
+		
+		//areaSelectionRect = new google.maps.Rectangle({
+		//	strokeColor: '#FF0000',
+		//	strokeOpacity: 0.8,
+		//	strokeWeight: 2,
+		//	fillColor: '#FF0000',
+		//	fillOpacity: 0.35,
+		//	editable: true
+		//});
+
+		//google.maps.event.addListener(areaSelectionRect, "click", areaRectClicked);
+	}
+
+	function viewWorld() {
+		primaryMap.setCenter(defaultCoordinates);
+		primaryMap.setZoom(defaultZoom);
+	}
+
+	function updateFire() {
+		var mapBounds = primaryMap.getBounds();
+		var mapCenter = primaryMap.getCenter();
+
+		var fakeRadius = calculateFakeRadius(mapBounds, mapCenter);
+
+		displayFires(mapCenter.lat, mapCenter.lng, fakeRadius);
+	}
+
+	function calculateFakeRadius(bounds, center) {
+		var centerLatKM = center.lng() * (kmInDegree * Math.cos(toRadians(center.lat())));
+		var centerLngKM = center.lat() * kmInDegree;
+		
+		var topLeftBounds = {
+			lat: bounds.f.f,
+			lng: bounds.b.b
+		};
+		var topLeftLatKM = topLeftBounds.lng * (kmInDegree * Math.cos(toRadians(topLeftBounds.lat)));
+		var topLeftLngKM = topLeftBounds.lat * kmInDegree;
+
+		var distance = Math.sqrt(Math.pow(centerLatKM - topLeftLatKM, 2) + Math.pow(centerLngKM - topLeftLngKM, 2));
+		
+		return distance;
+	}
+
+	function toRadians(degrees) {
+		return degrees * (Math.PI / 180);
+	}
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC9lBJFh4IvlymQ94KJ-dHY0rCJelrkMjk&callback=initMap"></script>

@@ -1,0 +1,47 @@
+﻿.Reports-List {
+
+    .Report-Item {
+        list-style: none;
+        width: 23.333%;
+        display: inline-block;
+        border: solid 1px #eee;
+        border-radius: 2px;
+        padding: 20px;
+        transition: color 0.2s;
+        position: relative;
+        margin-bottom: 10px;
+
+        .label-upper {
+            text-align: center;
+            display: block;
+            font-size: 1.875em;
+            font-family: "Playfair Display", serif;
+            color: #7b7b7b;
+
+            ::after {
+                content: "Kelvin";
+                font-style: normal;
+                font-size: 14px;
+                vertical-align: bottom;
+            }
+        }
+
+        .coord {
+            display: block;
+            padding: 10px;
+        }
+
+        .Details {
+            color: #ccc;
+            font-size: 12px;
+            position: absolute;
+            bottom: 0;
+            left: 5px;
+        }
+
+        .Details::before {
+            font-family: FontAwesome;
+            content: "\f017";
+        }
+    }
+}

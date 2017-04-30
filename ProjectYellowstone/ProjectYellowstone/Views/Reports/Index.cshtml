@@ -1,0 +1,27 @@
+﻿@model ProjectYellowstone.Models.ReportWrapper
+
+@{
+    ViewBag.Title = "Reports";
+}
+
+@Styles.Render("~/Content/Reports")
+@Scripts.Render("~/Scripts/Reports")
+
+<ul id="ReportMap" class="Reports-List">
+    @foreach (var item in Model.Reports)
+    {
+        <li data-probability="@item.Confidence" id="@item.ID" class="Report-Item">
+            <span class="label-upper Probabilty">Probabilty: @item.Confidence</span>
+            <span class="label-upper Temp">@item.Temperature<i class="Temp-prefix"></i></span>
+
+            <hr />
+
+            <span class="coord Lat">Latitude: @item.Latitude</span>
+            <span class="coord Long">Longitude: @item.Longitude</span>
+
+            <div class="Details">
+                <label class="Date-Added">US time @item.DateAcquired</label>
+            </div>
+        </li>
+    }
+</ul>
