@@ -1,0 +1,16 @@
+{
+  "name": "project-yellowstone/rest-api",
+  "description": "Handles the location-based requests for local fire data",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "-",
+      "email": "email@example.com"
+    }
+  ],
+  "require": {
+    "slim/slim": "^3.0",
+    "tuupola/slim-jwt-auth": "^2.3"
+  }
+}
